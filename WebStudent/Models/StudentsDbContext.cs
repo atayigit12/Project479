@@ -2,41 +2,46 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace WebStudent.Models;
-
-public partial class StudentsDbContext : DbContext
+namespace WebStudent.Models
 {
-    public StudentsDbContext()
+    public partial class StudentsDbContext : DbContext
     {
-    }
-
-    public StudentsDbContext(DbContextOptions<StudentsDbContext> options)
-        : base(options)
-    {
-    }
-
-    public virtual DbSet<Student> Students { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=StudentsDB;Integrated Security=True;Encrypt=True");
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Student>(entity =>
+        public StudentsDbContext()
         {
-            entity.HasKey(e => e.Id).HasName("PK__Students__3214EC0749BF6A6E");
+        }
 
-            entity.Property(e => e.BirthDate).HasColumnType("datetime");
-            entity.Property(e => e.Gpa)
-                .HasColumnType("decimal(9, 1)")
-                .HasColumnName("GPA");
-            entity.Property(e => e.Name).HasMaxLength(50);
-            entity.Property(e => e.Surname).HasMaxLength(50);
-        });
+        public StudentsDbContext(DbContextOptions<StudentsDbContext> options)
+            : base(options)
+        {
+        }
 
-        OnModelCreatingPartial(modelBuilder);
+        public virtual DbSet<Course> Courses { get; set; }
+        public virtual DbSet<Student> Students { get; set; }
+        public virtual DbSet<StudentCourse> StudentCourses { get; set; } // Add junction table as a DbSet
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+            => optionsBuilder.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=StudentsDB;Integrated Security=True;Encrypt=True");
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Many-to-Many Relationship using StudentCourse junction table
+            modelBuilder.Entity<StudentCourse>()
+                .HasKey(sc => new { sc.StudentId, sc.CourseId }); // Composite Key
+
+            modelBuilder.Entity<StudentCourse>()
+                .HasOne(sc => sc.Student)
+                .WithMany(s => s.StudentCourses)
+                .HasForeignKey(sc => sc.StudentId);
+
+            modelBuilder.Entity<StudentCourse>()
+                .HasOne(sc => sc.Course)
+                .WithMany(c => c.StudentCourses)
+                .HasForeignKey(sc => sc.CourseId);
+
+            OnModelCreatingPartial(modelBuilder);
+        }
+
+        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

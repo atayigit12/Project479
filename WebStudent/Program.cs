@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using WebStudent.Models; // Adjust the namespace as needed
+using WebStudent.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<StudentService>();
+builder.Services.AddScoped<CourseService>();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
